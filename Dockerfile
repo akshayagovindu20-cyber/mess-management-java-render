@@ -1,0 +1,13 @@
+FROM maven:3.9-eclipse-temurin-25 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn -B package
+
+FROM eclipse-temurin:25-jre
+RUN useradd --system --uid 10001 appuser
+WORKDIR /app
+COPY --from=build --chown=appuser:appuser /app/target/mess-management-system-1.0.0.jar app.jar
+USER appuser
+EXPOSE 8080
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/app.jar"]

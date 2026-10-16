@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Portal | Campus Mess Management</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a href="manager.html" class="brand-logo">
+        <div class="brand-icon">🍽️</div>
+        <span>Campus<span style="color: var(--primary);">Mess</span> <span class="badge badge-success">MANAGER</span></span>
+      </a>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <span id="manager-name" style="font-weight: 600;"></span>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content" style="max-width: 1440px; margin: 0 auto; width: 100%;">
+    <section class="card" style="background: linear-gradient(135deg, #059669, #047857); color: #ffffff; padding: 1.75rem; margin-bottom: 1.75rem; border: none;">
+      <h1 style="color: #ffffff; font-size: 1.7rem; margin-bottom: 0.4rem;">Mess Manager Dashboard</h1>
+      <p style="color: #d1fae5;">Manage today's dining operations, menus, and inventory.</p>
+      <p id="dashboard-date" style="color: #ffffff; margin-top: 0.5rem;"></p>
+    </section>
+
+    <section class="grid grid-cols-4 gap-4" style="margin-bottom: 2rem;" aria-label="Mess overview">
+      <article class="stat-card">
+        <div class="stat-icon" style="background: #eff6ff; color: #2563eb;">👥</div>
+        <div><div id="total-students" class="stat-val">—</div><div class="stat-label">Students</div></div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-icon" style="background: #ecfdf5; color: #059669;">✅</div>
+        <div><div id="present-today" class="stat-val">—</div><div class="stat-label">Present Today</div></div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-icon" style="background: #fffbeb; color: #d97706;">📦</div>
+        <div><div id="low-stock-count" class="stat-val">—</div><div class="stat-label">Low-stock Items</div></div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-icon" style="background: #fdf2f8; color: #db2777;">⭐</div>
+        <div><div id="average-rating" class="stat-val">—</div><div class="stat-label">Average Rating</div></div>
+      </article>
+    </section>
+
+    <section class="grid grid-cols-2 gap-6">
+      <article class="card">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;">
+          <h2 style="font-size: 1.2rem;">Today's Menu</h2>
+          <span id="menu-count" class="badge badge-info">0 meals</span>
+        </div>
+        <div id="today-menu" style="display: grid; gap: 0.75rem;">
+          <p>Loading today's menu…</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Low-stock Inventory</h2>
+        <div id="low-stock-items" style="display: grid; gap: 0.75rem;">
+          <p>Loading inventory…</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="card" style="margin-top: 1.5rem;">
+      <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Add a Menu Item</h2>
+      <form id="menu-form" class="grid grid-cols-2 gap-4">
+        <div class="form-group">
+          <label for="menu-date">Date</label>
+          <input id="menu-date" name="date" type="date" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="meal-type">Meal</label>
+          <select id="meal-type" name="mealType" class="form-control" required>
+            <option value="BREAKFAST">Breakfast</option>
+            <option value="LUNCH">Lunch</option>
+            <option value="DINNER">Dinner</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label for="menu-items">Food items</label>
+          <input id="menu-items" name="items" class="form-control" placeholder="e.g. Rice, dal, vegetables" required>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label for="menu-description">Description (optional)</label>
+          <input id="menu-description" name="description" class="form-control" placeholder="Add a short note about this meal">
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <button type="submit" class="btn btn-primary">Publish Menu</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    const manager = requireAuth(['manager']);
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[character]);
+    }
+
+    async function loadManagerDashboard() {
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString(undefined, {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+      document.getElementById('menu-date').value = today;
+
+      try {
+        const [stats, menus, inventory] = await Promise.all([
+          apiCall('/reports/dashboard?role=manager'),
+          apiCall(`/menu?date=${today}`),
+          apiCall('/inventory')
+        ]);
+
+        document.getElementById('total-students').textContent = stats.totalStudents ?? 0;
+        document.getElementById('present-today').textContent = stats.presentToday ?? 0;
+        document.getElementById('low-stock-count').textContent = stats.lowStockCount ?? 0;
+        document.getElementById('average-rating').textContent = Number(stats.averageRating ?? 0).toFixed(1);
+        document.getElementById('menu-count').textContent = `${menus.length} ${menus.length === 1 ? 'meal' : 'meals'}`;
+
+        document.getElementById('today-menu').innerHTML = menus.length
+          ? menus.map(menu => `
+            <div style="padding: 0.9rem; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+              <strong>${escapeHtml(menu.mealType)}</strong>
+              <p style="margin-top: 0.25rem;">${escapeHtml(menu.foodItems)}</p>
+              ${menu.description ? `<p style="font-size: 0.875rem; margin-top: 0.25rem;">${escapeHtml(menu.description)}</p>` : ''}
+            </div>`).join('')
+          : '<p>No menus have been published for today.</p>';
+
+        const lowStockItems = inventory.lowStockItems ?? [];
+        document.getElementById('low-stock-items').innerHTML = lowStockItems.length
+          ? lowStockItems.map(item => `
+            <div style="display: flex; justify-content: space-between; gap: 1rem; padding: 0.75rem; border-bottom: 1px solid var(--border-color);">
+              <strong>${escapeHtml(item.itemName)}</strong>
+              <span class="badge badge-warning">${escapeHtml(item.quantity)} ${escapeHtml(item.unit)} left</span>
+            </div>`).join('')
+          : '<p>All inventory items are above their minimum stock levels.</p>';
+      } catch (error) {
+        showToast(error.message || 'Could not load manager dashboard data.', 'error');
+        document.getElementById('today-menu').innerHTML = '<p>Could not load today’s menu. Please refresh the page.</p>';
+        document.getElementById('low-stock-items').innerHTML = '<p>Could not load inventory. Please refresh the page.</p>';
+      }
+    }
+
+    document.getElementById('menu-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const formData = new FormData(form);
+      const submitButton = form.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+
+      try {
+        await apiCall('/menu', 'POST', Object.fromEntries(formData.entries()));
+        showToast('Menu published successfully.', 'success');
+        await loadManagerDashboard();
+      } catch (error) {
+        showToast(error.message || 'Could not publish menu.', 'error');
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    if (manager) {
+      document.getElementById('manager-name').textContent = manager.name || 'Manager';
+      loadManagerDashboard();
+    }
+  </script>
+</body>
+</html>

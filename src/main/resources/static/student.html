@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Portal | Campus Mess Management</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a href="student.html" class="brand-logo">
+        <div class="brand-icon">🍽️</div>
+        <span>Campus<span style="color: var(--primary);">Mess</span> <span style="font-size: 0.8rem; background: var(--primary-light); color: var(--primary); padding: 0.15rem 0.5rem; border-radius: 9999px; margin-left: 0.25rem;">STUDENT</span></span>
+      </a>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div id="notification-bell-btn" style="position: relative; cursor: pointer; padding: 0.4rem; border-radius: 50%; background: #f1f5f9;" onclick="toggleNotifDropdown()">
+          <span style="font-size: 1.25rem;">🔔</span>
+          <span id="notif-count-badge" style="position: absolute; top: -2px; right: -2px; background: var(--danger); color: #fff; font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: 9999px; display: none;">0</span>
+        </div>
+        <div id="notif-dropdown" class="card" style="position: absolute; right: 2rem; top: 4.5rem; width: 340px; display: none; z-index: 50; box-shadow: var(--shadow-lg); padding: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            <h4 style="font-size: 0.95rem;">System Announcements</h4>
+            <button class="btn btn-secondary btn-sm" onclick="markAllNotificationsRead()" style="font-size: 0.75rem;">Clear All</button>
+          </div>
+          <div id="notif-list" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 280px; overflow-y: auto;">
+            <!-- Loaded dynamically -->
+          </div>
+        </div>
+
+        <div style="text-align: right;">
+          <div id="user-display-name" style="font-weight: 700; font-size: 0.9rem;">Alex Johnson</div>
+          <div id="user-display-roll" style="font-size: 0.775rem; color: #64748b;">STU-2026-081</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- App Layout -->
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-heading">Navigation</div>
+      <div class="sidebar-nav-item active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+      <div class="sidebar-nav-item" onclick="switchTab('menu')">📅 Daily Menu</div>
+      <div class="sidebar-nav-item" onclick="switchTab('attendance')">✅ Meal Attendance</div>
+      <div class="sidebar-nav-item" onclick="switchTab('feedback')">⭐ Food Feedback</div>
+      <div class="sidebar-nav-item" onclick="switchTab('fees')">💳 Fees & Payments</div>
+      <div class="sidebar-nav-item" onclick="switchTab('profile')">👤 My Profile</div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- TAB 1: DASHBOARD -->
+      <section id="tab-dashboard" class="tab-content">
+        <!-- Welcome Hero Banner -->
+        <div class="card" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; padding: 1.75rem; margin-bottom: 1.75rem; border: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h2 style="color: #ffffff; font-size: 1.6rem; margin-bottom: 0.25rem;">Welcome back, <span id="welcome-name">Student</span>!</h2>
+              <p style="color: #bfdbfe; font-size: 0.95rem;">
+                Hostel: <strong id="welcome-hostel" style="color: #ffffff;">Block A</strong> | Room: <strong id="welcome-room" style="color: #ffffff;">204-B</strong> | Today is <strong id="today-date-text" style="color: #ffffff;"></strong>
+              </p>
+            </div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <button class="btn btn-secondary btn-sm" style="background: #ffffff; color: var(--primary);" onclick="switchTab('attendance')">Mark Attendance</button>
+              <button class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.2); color: #ffffff; border-color: rgba(255,255,255,0.4);" onclick="switchTab('fees')">Pay Dues</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-4 gap-4" style="margin-bottom: 2rem;">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #eff6ff; color: #2563eb;">🍽️</div>
+            <div>
+              <div id="stat-meals-count" class="stat-val">3</div>
+              <div class="stat-label">Meals Served Today</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #ecfdf5; color: #10b981;">📈</div>
+            <div>
+              <div id="stat-attendance-pct" class="stat-val">--%</div>
+              <div class="stat-label">Meal Attendance</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #fef3c7; color: #d97706;">💳</div>
+            <div>
+              <div id="stat-fee-status" class="stat-val" style="font-size: 1.25rem;">PENDING</div>
+              <div class="stat-label">Mess Fee (Oct 2026)</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #fdf2f8; color: #db2777;">⭐</div>
+            <div>
+              <div id="stat-feedback-count" class="stat-val">--</div>
+              <div class="stat-label">Reviews Submitted</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div style="margin-bottom: 2rem;">
+          <h3 style="font-size: 1.15rem; margin-bottom: 1rem;">Quick Actions</h3>
+          <div class="grid grid-cols-4 gap-3">
+            <button class="btn btn-secondary" onclick="switchTab('menu')" style="padding: 1rem; flex-direction: column; height: auto;">
+              <span style="font-size: 1.5rem; margin-bottom: 0.25rem;">📅</span>
+              <span>View Daily Menu</span>
+            </button>
+            <button class="btn btn-secondary" onclick="switchTab('attendance')" style="padding: 1rem; flex-direction: column; height: auto;">
+              <span style="font-size: 1.5rem; margin-bottom: 0.25rem;">✅</span>
+              <span>Mark Attendance</span>
+            </button>
+            <button class="btn btn-secondary" onclick="switchTab('feedback')" style="padding: 1rem; flex-direction: column; height: auto;">
+              <span style="font-size: 1.5rem; margin-bottom: 0.25rem;">⭐</span>
+              <span>Submit Meal Feedback</span>
+            </button>
+            <button class="btn btn-secondary" onclick="switchTab('fees')" style="padding: 1rem; flex-direction: column; height: auto;">
+              <span style="font-size: 1.5rem; margin-bottom: 0.25rem;">💳</span>
+              <span>Pay Mess Dues</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Today's Meal Snapshot -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h3 style="font-size: 1.15rem;">Today's Dining Schedule & Attendance</h3>
+            <span class="badge badge-info" id="dash-date-badge">Today</span>
+          </div>
+          <div id="dashboard-meals-container" class="grid grid-cols-3 gap-4">
+            <!-- Loaded dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: DAILY MENU -->
+      <section id="tab-menu" class="tab-content" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2 style="font-size: 1.6rem;">Daily Mess Menu</h2>
+            <p>Nutritious food items prepared fresh by dining hall staff.</p>
+          </div>
+          <!-- Date Navigator -->
+          <div style="display: flex; align-items: center; gap: 0.5rem; background: #ffffff; padding: 0.35rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <button class="btn btn-secondary btn-sm" onclick="changeMenuDate(-1)">&larr; Prev</button>
+            <input type="date" id="menu-date-input" class="form-control" style="width: auto; padding: 0.3rem 0.5rem; font-size: 0.875rem;" onchange="loadMenuForDate(this.value)">
+            <button class="btn btn-secondary btn-sm" onclick="changeMenuDate(1)">Next &rarr;</button>
+            <button class="btn btn-primary btn-sm" onclick="loadTodayMenu()">Today</button>
+          </div>
+        </div>
+
+        <div id="menu-cards-container" class="grid grid-cols-3 gap-6">
+          <!-- Loaded dynamically -->
+        </div>
+      </section>
+
+      <!-- TAB 3: MEAL ATTENDANCE -->
+      <section id="tab-attendance" class="tab-content" style="display: none;">
+        <div style="margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.6rem;">Meal Attendance</h2>
+          <p>Mark attendance before deadlines to ensure fresh preparation and prevent dining hall food waste.</p>
+        </div>
+
+        <!-- Mark Attendance Action Cards -->
+        <div class="card" style="margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.15rem;">Mark Today's Meals</h3>
+            <span style="font-size: 0.85rem; color: #64748b;">Lockout rule strictly enforced by kitchen timer</span>
+          </div>
+          <div id="attendance-mark-cards" class="grid grid-cols-3 gap-4">
+            <!-- Loaded dynamically with Breakfast, Lunch, Dinner -->
+          </div>
+        </div>
+
+        <!-- Attendance Analytics & History -->
+        <div class="grid grid-cols-3 gap-6">
+          <div class="card" style="grid-column: span 1;">
+            <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">Attendance Summary</h3>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              <div style="text-align: center; padding: 1.5rem; background: #f8fafc; border-radius: var(--radius-md);">
+                <div id="att-pct-circle" style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">0%</div>
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Overall Attendance Rate</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);">
+                <span>Total Meals Tracked:</span>
+                <strong id="att-summary-total">0</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);">
+                <span>Attended (Present):</span>
+                <strong id="att-summary-attended" style="color: var(--accent);">0</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+                <span>Skipped / Missed:</span>
+                <strong id="att-summary-missed" style="color: var(--danger);">0</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="grid-column: span 2;">
+            <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">Attendance History</h3>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Meal</th>
+                    <th>Status</th>
+                    <th>Marked At</th>
+                  </tr>
+                </thead>
+                <tbody id="attendance-history-table">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: FEEDBACK -->
+      <section id="tab-feedback" class="tab-content" style="display: none;">
+        <div style="margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.6rem;">Meal Feedback & Rating</h2>
+          <p>Rate your food quality. Your feedback directly impacts mess menus and supplier selection.</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-6">
+          <!-- Submit Form -->
+          <div class="card" style="grid-column: span 1;">
+            <h3 style="font-size: 1.15rem; margin-bottom: 1rem;">Share Your Experience</h3>
+            <form id="feedback-form">
+              <div class="form-group">
+                <label for="fb-meal-type">Meal Type</label>
+                <select id="fb-meal-type" class="form-control" required>
+                  <option value="BREAKFAST">Breakfast</option>
+                  <option value="LUNCH" selected>Lunch</option>
+                  <option value="DINNER">Dinner</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="fb-date">Date</label>
+                <input type="date" id="fb-date" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label>Food Quality Rating</label>
+                <div class="star-rating" id="star-picker">
+                  <span class="star active" data-val="1">★</span>
+                  <span class="star active" data-val="2">★</span>
+                  <span class="star active" data-val="3">★</span>
+                  <span class="star active" data-val="4">★</span>
+                  <span class="star active" data-val="5">★</span>
+                </div>
+                <input type="hidden" id="fb-rating" value="5">
+                <div id="star-label" style="font-size: 0.8rem; color: #f59e0b; font-weight: 600; margin-top: 0.2rem;">★★★★★ Excellent (5/5)</div>
+              </div>
+              <div class="form-group">
+                <label for="fb-comment">Detailed Comments</label>
+                <textarea id="fb-comment" class="form-control" rows="4" placeholder="How was the taste, freshness, seasoning, or hygiene?" required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Feedback</button>
+            </form>
+          </div>
+
+          <!-- History -->
+          <div class="card" style="grid-column: span 2;">
+            <h3 style="font-size: 1.15rem; margin-bottom: 1rem;">My Submitted Reviews</h3>
+            <div id="my-feedback-list" style="display: flex; flex-direction: column; gap: 1rem; max-height: 520px; overflow-y: auto;">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: FEES & PAYMENTS -->
+      <section id="tab-fees" class="tab-content" style="display: none;">
+        <div style="margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.6rem;">Mess Fees & Payment Dues</h2>
+          <p>Review current monthly billing, settle dues online, and download printable tax receipts.</p>
+        </div>
+
+        <!-- Current Dues Banner Card -->
+        <div class="card" style="background: #ffffff; border-left: 4px solid var(--primary); margin-bottom: 2rem; padding: 1.75rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <span id="fee-badge" class="badge badge-warning" style="margin-bottom: 0.5rem;">PENDING PAYMENT</span>
+              <h3 style="font-size: 1.4rem; margin-top: 0.25rem;">
+                Monthly Mess Fee: <span id="fee-amount-text" style="color: var(--primary);">₹3,200.00</span>
+              </h3>
+              <p style="font-size: 0.875rem; margin-top: 0.2rem;">
+                Billing Cycle: <strong id="fee-cycle-text">October 2026</strong> | Due Date: <strong id="fee-due-date-text">October 31, 2026</strong>
+              </p>
+            </div>
+            <div id="fee-action-area">
+              <button class="btn btn-primary btn-lg" onclick="openPaymentModal()">
+                <span>💳</span> Pay Mess Dues Online
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment History Table -->
+        <div class="card">
+          <h3 style="font-size: 1.15rem; margin-bottom: 1rem;">Payment Transactions & Receipts</h3>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Transaction ID</th>
+                  <th>Month</th>
+                  <th>Amount</th>
+                  <th>Method</th>
+                  <th>Status</th>
+                  <th>Payment Date</th>
+                  <th>Receipt</th>
+                </tr>
+              </thead>
+              <tbody id="payment-history-table">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: PROFILE -->
+      <section id="tab-profile" class="tab-content" style="display: none;">
+        <div style="margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.6rem;">Student Profile & Security</h2>
+          <p>Keep your contact and hostel accommodation details current.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-6">
+          <!-- Profile Details -->
+          <div class="card">
+            <h3 style="font-size: 1.15rem; margin-bottom: 1.25rem;">Personal & Hostel Details</h3>
+            <form id="profile-form">
+              <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="prof-name" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label>Institutional Email</label>
+                <input type="email" id="prof-email" class="form-control" disabled style="background: #f1f5f9;">
+              </div>
+              <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" id="prof-phone" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label>Student Roll ID</label>
+                <input type="text" id="prof-roll" class="form-control">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="form-group">
+                  <label>Hostel Block</label>
+                  <input type="text" id="prof-hostel" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label>Room Number</label>
+                  <input type="text" id="prof-room" class="form-control">
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem;">Save Changes</button>
+            </form>
+          </div>
+
+          <!-- Password Reset -->
+          <div class="card">
+            <h3 style="font-size: 1.15rem; margin-bottom: 1.25rem;">Update Password</h3>
+            <form id="change-pwd-form">
+              <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" id="curr-pwd" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label>New Password (min 8 characters)</label>
+                <input type="password" id="new-pwd" class="form-control" required minlength="8">
+              </div>
+              <div class="form-group">
+                <label>Confirm New Password</label>
+                <input type="password" id="confirm-new-pwd" class="form-control" required minlength="8">
+              </div>
+              <button type="submit" class="btn btn-secondary" style="margin-top: 0.5rem;">Change Password</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- PAYMENT MODAL -->
+  <div id="payment-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size: 1.2rem;">Complete Mess Fee Payment</h3>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('payment-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: #eff6ff; padding: 1rem; border-radius: var(--radius-md); border: 1px solid #bfdbfe; margin-bottom: 1.25rem;">
+          <div style="font-size: 0.85rem; color: #1e40af;">Payable Amount</div>
+          <div style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">₹3,200.00</div>
+          <div style="font-size: 0.8rem; color: #3b82f6;">Includes 3 full meals/day boarding charges for current month</div>
+        </div>
+
+        <form id="pay-now-form">
+          <div class="form-group">
+            <label>Payment Method</label>
+            <select id="pay-method" class="form-control">
+              <option value="UPI (Google Pay / PhonePe)">UPI (Google Pay / PhonePe)</option>
+              <option value="Debit / Credit Card">Debit / Credit Card</option>
+              <option value="Net Banking">Net Banking</option>
+              <option value="Campus SmartCard">Campus SmartCard</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Billing Month</label>
+            <input type="text" id="pay-month-year" class="form-control" readonly value="October 2026">
+          </div>
+          <div style="font-size: 0.825rem; color: #64748b; margin-top: 0.5rem;">
+            🔒 Simulated sandbox payment gateway. No real money will be charged.
+          </div>
+          <div class="modal-footer" style="padding-left: 0; padding-right: 0; margin-top: 1.25rem;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('payment-modal')">Cancel</button>
+            <button type="submit" id="pay-submit-btn" class="btn btn-primary">Authorize & Pay ₹3,200</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECEIPT MODAL -->
+  <div id="receipt-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 600px;">
+      <div class="modal-header no-print">
+        <h3 style="font-size: 1.15rem;">Fee Payment Receipt</h3>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('receipt-modal')">&times;</button>
+      </div>
+      <div class="modal-body" id="receipt-print-area" style="font-family: monospace;">
+        <!-- Loaded dynamically -->
+      </div>
+      <div class="modal-footer no-print">
+        <button class="btn btn-secondary" onclick="closeModal('receipt-modal')">Close</button>
+        <button class="btn btn-primary" onclick="window.print()">🖨️ Print Receipt</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    const user = requireAuth(['student']);
+    renderTopBar('student');
+
+    let currentMenuDate = new Date().toISOString().split('T')[0];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!user) return;
+      initStudentData();
+      initStarPicker();
+      loadNotifications();
+    });
+
+    function initStudentData() {
+      document.getElementById('user-display-name').textContent = user.name;
+      document.getElementById('welcome-name').textContent = user.name;
+      const roll = (user.profile && user.profile.student_id) ? user.profile.student_id : 'STU-' + user.id;
+      document.getElementById('user-display-roll').textContent = roll;
+      document.getElementById('welcome-hostel').textContent = (user.profile && user.profile.hostel_block) || 'Block A';
+      document.getElementById('welcome-room').textContent = (user.profile && user.profile.room_number) || '101';
+
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('today-date-text').textContent = new Date().toLocaleDateString('en-US', options);
+      document.getElementById('fb-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('menu-date-input').value = currentMenuDate;
+
+      // Populate profile tab
+      document.getElementById('prof-name').value = user.name;
+      document.getElementById('prof-email').value = user.email;
+      document.getElementById('prof-phone').value = user.phone || '';
+      document.getElementById('prof-roll').value = roll;
+      document.getElementById('prof-hostel').value = (user.profile && user.profile.hostel_block) || '';
+      document.getElementById('prof-room').value = (user.profile && user.profile.room_number) || '';
+
+      loadDashboard();
+      loadMenuForDate(currentMenuDate);
+      loadAttendance();
+      loadFeedback();
+      loadFees();
+    }
+
+    // Tabs switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+      document.querySelectorAll('.sidebar-nav-item').forEach(i => i.classList.remove('active'));
+
+      const activeTab = document.getElementById('tab-' + tabId);
+      if (activeTab) activeTab.style.display = 'block';
+
+      const navItems = document.querySelectorAll('.sidebar-nav-item');
+      const tabMap = { dashboard: 0, menu: 1, attendance: 2, feedback: 3, fees: 4, profile: 5 };
+      if (navItems[tabMap[tabId]]) navItems[tabMap[tabId]].classList.add('active');
+
+      if (tabId === 'menu') loadMenuForDate(currentMenuDate);
+      if (tabId === 'attendance') loadAttendance();
+      if (tabId === 'fees') loadFees();
+      if (tabId === 'feedback') loadFeedback();
+    }
+
+    // Dashboard Loader
+    async function loadDashboard() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const res = await apiCall(`/reports/dashboard?role=student&userId=${user.id}`);
+        
+        document.getElementById('stat-meals-count').textContent = res.todayMenus ? res.todayMenus.length : 3;
+        document.getElementById('stat-attendance-pct').textContent = (res.attendancePercentage || 100) + '%';
+        
+        const feeEl = document.getElementById('stat-fee-status');
+        feeEl.textContent = res.feeStatus || 'PENDING';
+        feeEl.style.color = res.feeStatus === 'PAID' ? 'var(--accent)' : 'var(--danger)';
+
+        // Render Today's Meal Snapshot
+        const container = document.getElementById('dashboard-meals-container');
+        container.innerHTML = '';
+
+        const mealTypes = [
+          { type: 'breakfast', name: 'Breakfast', icon: '🌅', time: '07:30 AM - 09:30 AM' },
+          { type: 'lunch', name: 'Lunch', icon: '☀️', time: '12:30 PM - 02:30 PM' },
+          { type: 'dinner', name: 'Dinner', icon: '🌙', time: '07:30 PM - 09:30 PM' }
+        ];
+
+        mealTypes.forEach(m => {
+          const menu = res.todayMenus ? res.todayMenus.find(x => x.mealType.toLowerCase() === m.type) : null;
+          const att = res.todayAttendances ? res.todayAttendances.find(x => x.mealType.toLowerCase() === m.type) : null;
+
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.style.background = '#f8fafc';
+          card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <h4 style="font-size: 1.05rem;">${m.icon} ${m.name}</h4>
+              <span class="badge ${att ? (att.status === 'PRESENT' ? 'badge-present' : 'badge-absent') : 'badge-low'}">
+                ${att ? att.status : 'NOT MARKED'}
+              </span>
+            </div>
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;">⏰ ${menu ? menu.mealTime : m.time}</p>
+            <p style="font-size: 0.875rem; color: #1e293b; font-weight: 500; line-height: 1.4;">
+              ${menu ? (menu.foodItems || menu.items) : 'Standard healthy meal'}
+            </p>
+          `;
+          container.appendChild(card);
+        });
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Daily Menu Loader
+    async function loadMenuForDate(dateStr) {
+      currentMenuDate = dateStr;
+      document.getElementById('menu-date-input').value = dateStr;
+      const container = document.getElementById('menu-cards-container');
+      container.innerHTML = '<div style="grid-column: span 3; text-align: center; padding: 2rem;">Loading menu...</div>';
+
+      try {
+        const menus = await apiCall(`/menu?date=${dateStr}`);
+        container.innerHTML = '';
+
+        const mealOrder = ['breakfast', 'lunch', 'dinner'];
+        const mealMeta = {
+          breakfast: { title: 'Breakfast', icon: '🍳', defaultTime: '07:30 AM - 09:30 AM', color: '#eff6ff', border: '#93c5fd' },
+          lunch: { title: 'Lunch', icon: '🍛', defaultTime: '12:30 PM - 02:30 PM', color: '#f0fdf4', border: '#86efac' },
+          dinner: { title: 'Dinner', icon: '🍲', defaultTime: '07:30 PM - 09:30 PM', color: '#fefce8', border: '#fde047' }
+        };
+
+        mealOrder.forEach(mType => {
+          const menu = menus.find(m => m.mealType.toLowerCase() === mType);
+          const meta = mealMeta[mType];
+
+          const col = document.createElement('div');
+          col.className = 'card';
+          col.style.borderColor = meta.border;
+          col.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.5rem;">${meta.icon}</span>
+                <h3 style="font-size: 1.25rem;">${meta.title}</h3>
+              </div>
+              <span class="badge badge-info" style="font-size: 0.7rem;">${menu ? menu.mealTime : meta.defaultTime}</span>
+            </div>
+            <div style="background: ${meta.color}; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+              <h4 style="font-size: 0.95rem; margin-bottom: 0.25rem; color: #0f172a;">Food Items:</h4>
+              <p style="font-size: 0.95rem; color: #1e293b; font-weight: 600; line-height: 1.5;">
+                ${menu ? (menu.foodItems || menu.items) : 'Chef\'s special assortment'}
+              </p>
+            </div>
+            <div style="font-size: 0.85rem; color: #64748b; line-height: 1.5;">
+              <strong>Description:</strong> ${menu && menu.description ? menu.description : 'Prepared in clean hygienic mess facility with fresh ingredients.'}
+            </div>
+          `;
+          container.appendChild(col);
+        });
+
+      } catch (err) {
+        container.innerHTML = `<div style="grid-column: span 3; color: var(--danger); text-align: center;">Failed to load menu: ${err.message}</div>`;
+      }
+    }
+
+    function changeMenuDate(deltaDays) {
+      const d = new Date(currentMenuDate);
+      d.setDate(d.getDate() + deltaDays);
+      loadMenuForDate(d.toISOString().split('T')[0]);
+    }
+
+    function loadTodayMenu() {
+      loadMenuForDate(new Date().toISOString().split('T')[0]);
+    }
+
+    // Attendance Loader & Marking
+    async function loadAttendance() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const res = await apiCall(`/attendance/my?studentId=${user.id}`);
+        const schedules = await apiCall('/schedule');
+
+        // Render Action Cards for Today
+        const cardArea = document.getElementById('attendance-mark-cards');
+        cardArea.innerHTML = '';
+
+        const mealTypes = ['breakfast', 'lunch', 'dinner'];
+        const mealIcons = { breakfast: '🌅', lunch: '☀️', dinner: '🌙' };
+
+        mealTypes.forEach(m => {
+          const att = res.attendances.find(a => a.date === today && a.mealType.toLowerCase() === m);
+          const sched = schedules.find(s => s.mealType.toLowerCase() === m) || { attendanceDeadline: '07:00 AM' };
+
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.style.background = att ? '#f8fafc' : '#ffffff';
+          div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <h4 style="font-size: 1.1rem; text-transform: capitalize;">${mealIcons[m]} ${m}</h4>
+              <span class="badge ${att ? (att.status === 'PRESENT' ? 'badge-present' : 'badge-absent') : 'badge-low'}">
+                ${att ? att.status : 'UNMARKED'}
+              </span>
+            </div>
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem;">
+              ⏰ Cutoff Deadline: <strong>${sched.attendanceDeadline}</strong>
+            </p>
+            ${att ? `
+              <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600;">
+                ✓ Attendance recorded for today.
+              </div>
+            ` : `
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-primary btn-sm" style="flex: 1;" onclick="markAttendanceAction('${m}', 'PRESENT')">I'll Eat (Present)</button>
+                <button class="btn btn-secondary btn-sm" style="flex: 1;" onclick="markAttendanceAction('${m}', 'ABSENT')">Skip Meal</button>
+              </div>
+            `}
+          `;
+          cardArea.appendChild(div);
+        });
+
+        // Summary Stats
+        if (res.summary) {
+          document.getElementById('att-pct-circle').textContent = res.summary.attendancePercentage + '%';
+          document.getElementById('att-summary-total').textContent = res.summary.totalMeals;
+          document.getElementById('att-summary-attended').textContent = res.summary.attendedMeals;
+          document.getElementById('att-summary-missed').textContent = res.summary.missedMeals;
+        }
+
+        // History Table
+        const tbody = document.getElementById('attendance-history-table');
+        tbody.innerHTML = '';
+        if (res.attendances.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8;">No attendance marked yet.</td></tr>';
+        } else {
+          res.attendances.forEach(a => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><strong>${formatDate(a.date)}</strong></td>
+              <td style="text-transform: capitalize;">${a.mealType}</td>
+              <td><span class="badge ${a.status === 'PRESENT' ? 'badge-present' : 'badge-absent'}">${a.status}</span></td>
+              <td style="color: #64748b; font-size: 0.825rem;">${a.markedAt ? a.markedAt.replace('T', ' ').substring(0, 16) : '-'}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+      } catch (err) {
+        showToast('Error loading attendance: ' + err.message, 'error');
+      }
+    }
+
+    async function markAttendanceAction(mealType, status) {
+      const today = new Date().toISOString().split('T')[0];
+      try {
+        const res = await apiCall('/attendance', 'POST', {
+          studentId: user.id,
+          date: today,
+          mealType: mealType.toUpperCase(),
+          status: status
+        });
+        showToast(res.message || 'Attendance marked successfully!', 'success');
+        loadAttendance();
+        loadDashboard();
+      } catch (err) {
+        showToast(err.message || 'Could not mark attendance.', 'error');
+      }
+    }
+
+    // Feedback Loader & Submitter
+    async function loadFeedback() {
+      try {
+        const list = await apiCall(`/feedback/my?studentId=${user.id}`);
+        document.getElementById('stat-feedback-count').textContent = list.length;
+        const container = document.getElementById('my-feedback-list');
+        container.innerHTML = '';
+
+        if (list.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 2rem;">No feedback submitted yet. Share your experience!</div>';
+        } else {
+          list.forEach(fb => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.style.background = '#f8fafc';
+            card.innerHTML = `
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span class="badge badge-info" style="text-transform: capitalize;">${fb.mealType}</span>
+                  <span style="font-size: 0.85rem; color: #64748b;">${formatDate(fb.date)}</span>
+                </div>
+                <div style="color: #f59e0b; font-size: 1.1rem;">${'★'.repeat(fb.rating)}${'☆'.repeat(5 - fb.rating)}</div>
+              </div>
+              <p style="font-size: 0.9rem; color: #1e293b; line-height: 1.5;">"${fb.comment || fb.comments}"</p>
+            `;
+            container.appendChild(card);
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function initStarPicker() {
+      const stars = document.querySelectorAll('#star-picker .star');
+      const ratingInput = document.getElementById('fb-rating');
+      const starLabel = document.getElementById('star-label');
+      const labels = ['', 'Poor (1/5)', 'Fair (2/5)', 'Good (3/5)', 'Very Good (4/5)', 'Excellent (5/5)'];
+
+      stars.forEach(star => {
+        star.addEventListener('click', () => {
+          const val = parseInt(star.getAttribute('data-val'));
+          ratingInput.value = val;
+          starLabel.textContent = `${'★'.repeat(val)}${'☆'.repeat(5 - val)} ${labels[val]}`;
+          stars.forEach(s => {
+            const sVal = parseInt(s.getAttribute('data-val'));
+            if (sVal <= val) {
+              s.classList.add('active');
+            } else {
+              s.classList.remove('active');
+            }
+          });
+        });
+      });
+    }
+
+    document.getElementById('feedback-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const mealType = document.getElementById('fb-meal-type').value;
+      const date = document.getElementById('fb-date').value;
+      const rating = parseInt(document.getElementById('fb-rating').value);
+      const comments = document.getElementById('fb-comment').value.trim();
+
+      try {
+        const res = await apiCall('/feedback', 'POST', {
+          studentId: user.id,
+          mealType,
+          date,
+          rating,
+          comments
+        });
+        showToast(res.message || 'Feedback submitted successfully.', 'success');
+        document.getElementById('fb-comment').value = '';
+        loadFeedback();
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
+    });
+
+    // Mess Fees & Payment
+    async function loadFees() {
+      try {
+        const res = await apiCall(`/payments/my?studentId=${user.id}`);
+        const feeStatus = res.feeStatus;
+
+        const badge = document.getElementById('fee-badge');
+        const actionArea = document.getElementById('fee-action-area');
+
+        if (feeStatus.isPaid) {
+          badge.className = 'badge badge-success';
+          badge.textContent = 'FEE PAID FOR ' + feeStatus.currentMonth.toUpperCase();
+          actionArea.innerHTML = `<button class="btn btn-secondary" disabled style="color: var(--accent); font-weight: 700;">✓ Fully Paid for Month</button>`;
+        } else {
+          badge.className = 'badge badge-warning';
+          badge.textContent = 'PAYMENT DUE';
+          actionArea.innerHTML = `<button class="btn btn-primary btn-lg" onclick="openPaymentModal()">💳 Pay Mess Dues Online</button>`;
+        }
+
+        document.getElementById('fee-cycle-text').textContent = feeStatus.currentMonth;
+        document.getElementById('fee-due-date-text').textContent = formatDate(feeStatus.dueDate);
+
+        // Payments table
+        const tbody = document.getElementById('payment-history-table');
+        tbody.innerHTML = '';
+        if (res.payments.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8;">No payment transactions recorded.</td></tr>';
+        } else {
+          res.payments.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><code>${p.transactionId}</code></td>
+              <td>${p.monthYear}</td>
+              <td><strong>${formatCurrency(p.amount)}</strong></td>
+              <td>${p.paymentMethod || 'UPI'}</td>
+              <td><span class="badge ${p.paymentStatus === 'PAID' ? 'badge-success' : 'badge-warning'}">${p.paymentStatus}</span></td>
+              <td>${p.paymentDate ? p.paymentDate.substring(0, 10) : '-'}</td>
+              <td><button class="btn btn-secondary btn-sm" onclick="showReceipt(${p.id})">📄 Receipt</button></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function openPaymentModal() {
+      openModal('payment-modal');
+    }
+
+    document.getElementById('pay-now-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const method = document.getElementById('pay-method').value;
+      const monthYear = document.getElementById('pay-month-year').value;
+      const submitBtn = document.getElementById('pay-submit-btn');
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Processing Payment...';
+
+      try {
+        const res = await apiCall('/payments/pay', 'POST', {
+          studentId: user.id,
+          amount: 3200.00,
+          monthYear: monthYear,
+          paymentMethod: method
+        });
+
+        closeModal('payment-modal');
+        showToast(res.message, 'success');
+        loadFees();
+        loadDashboard();
+
+        // Automatically open receipt
+        if (res.payment && res.payment.id) {
+          showReceipt(res.payment.id);
+        }
+      } catch (err) {
+        showToast('Payment Failed: ' + err.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Authorize & Pay ₹3,200';
+      }
+    });
+
+    async function showReceipt(paymentId) {
+      try {
+        const r = await apiCall(`/payments/receipt/${paymentId}`);
+        const area = document.getElementById('receipt-print-area');
+        area.innerHTML = `
+          <div style="border-bottom: 2px dashed #0f172a; padding-bottom: 1rem; margin-bottom: 1rem; text-align: center;">
+            <h2 style="font-size: 1.3rem; margin-bottom: 0.25rem;">CAMPUS HOSTEL & MESS SERVICES</h2>
+            <div style="font-size: 0.85rem; color: #475569;">Official Student Mess Boarding Receipt</div>
+            <div style="font-size: 0.8rem; color: #64748b;">Tax Invoice: ${r.taxInvoiceNumber || 'INV-' + r.transactionId}</div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.85rem; margin-bottom: 1rem;">
+            <div><strong>Student Name:</strong> ${r.studentName}</div>
+            <div><strong>Student Roll:</strong> ${r.rollNo || 'STU-' + r.studentId}</div>
+            <div><strong>Hostel Block:</strong> ${r.hostelBlock || 'Block A'}</div>
+            <div><strong>Room No:</strong> ${r.roomNumber || '101'}</div>
+            <div><strong>Payment Date:</strong> ${r.paymentDate ? r.paymentDate.replace('T', ' ').substring(0, 16) : '-'}</div>
+            <div><strong>Transaction ID:</strong> ${r.transactionId}</div>
+            <div><strong>Billing Month:</strong> ${r.monthYear}</div>
+            <div><strong>Payment Mode:</strong> ${r.paymentMethod}</div>
+          </div>
+          <table style="width: 100%; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; margin-bottom: 1rem; font-size: 0.85rem;">
+            <tr>
+              <td style="padding: 0.5rem 0;">Monthly Hostel Boarding Charges</td>
+              <td style="text-align: right; font-weight: bold;">${formatCurrency(r.amount)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem 0;">Kitchen Maintenance & Hygiene Fee</td>
+              <td style="text-align: right; color: var(--accent);">INCLUDED</td>
+            </tr>
+            <tr style="font-size: 1rem; font-weight: bold; border-top: 1px solid #cbd5e1;">
+              <td style="padding: 0.75rem 0;">TOTAL PAID AMOUNT:</td>
+              <td style="text-align: right; color: var(--primary);">${formatCurrency(r.amount)}</td>
+            </tr>
+          </table>
+          <div style="text-align: center; font-size: 0.775rem; color: #64748b;">
+            Status: <span style="color: var(--accent); font-weight: bold;">PAID & VERIFIED ELECTRONICALLY</span><br>
+            Thank you for keeping your campus mess subscription up to date.
+          </div>
+        `;
+        openModal('receipt-modal');
+      } catch (err) {
+        showToast('Receipt error: ' + err.message, 'error');
+      }
+    }
+
+    // Profile updates
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('prof-name').value.trim();
+      const phone = document.getElementById('prof-phone').value.trim();
+      const studentId = document.getElementById('prof-roll').value.trim();
+      const hostelBlock = document.getElementById('prof-hostel').value.trim();
+      const roomNumber = document.getElementById('prof-room').value.trim();
+
+      try {
+        const res = await apiCall('/auth/profile', 'PUT', {
+          userId: user.id,
+          name,
+          phone,
+          studentId,
+          hostelBlock,
+          roomNumber
+        });
+        showToast(res.message, 'success');
+        user.name = name;
+        user.phone = phone;
+        if (!user.profile) user.profile = {};
+        user.profile.student_id = studentId;
+        user.profile.hostel_block = hostelBlock;
+        user.profile.room_number = roomNumber;
+        setCurrentUser(user);
+        initStudentData();
+      } catch (err) {
+        showToast('Update failed: ' + err.message, 'error');
+      }
+    });
+
+    document.getElementById('change-pwd-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentPassword = document.getElementById('curr-pwd').value;
+      const newPassword = document.getElementById('new-pwd').value;
+      const confirmPassword = document.getElementById('confirm-new-pwd').value;
+
+      try {
+        const res = await apiCall('/auth/change-password', 'PUT', {
+          userId: user.id,
+          currentPassword,
+          newPassword,
+          confirmPassword
+        });
+        showToast(res.message, 'success');
+        document.getElementById('change-pwd-form').reset();
+      } catch (err) {
+        showToast('Password change failed: ' + err.message, 'error');
+      }
+    });
+
+    // Notifications
+    async function loadNotifications() {
+      try {
+        const list = await apiCall(`/notifications?userId=${user.id}`);
+        const unread = list.filter(n => !n.read).length;
+        const badge = document.getElementById('notif-count-badge');
+        if (unread > 0) {
+          badge.textContent = unread;
+          badge.style.display = 'inline';
+        } else {
+          badge.style.display = 'none';
+        }
+
+        const container = document.getElementById('notif-list');
+        container.innerHTML = '';
+        if (list.length === 0) {
+          container.innerHTML = '<div style="font-size: 0.825rem; color: #64748b;">No announcements.</div>';
+        } else {
+          list.forEach(n => {
+            const item = document.createElement('div');
+            item.style.padding = '0.5rem';
+            item.style.borderRadius = 'var(--radius-sm)';
+            item.style.background = n.read ? '#f8fafc' : '#eff6ff';
+            item.style.border = n.read ? '1px solid var(--border-color)' : '1px solid #bfdbfe';
+            item.innerHTML = `
+              <div style="font-weight: 600; font-size: 0.85rem; color: #0f172a;">${n.title}</div>
+              <div style="font-size: 0.8rem; color: #475569; margin-top: 0.2rem;">${n.message}</div>
+            `;
+            container.appendChild(item);
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function toggleNotifDropdown() {
+      const dd = document.getElementById('notif-dropdown');
+      dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+    }
+
+    async function markAllNotificationsRead() {
+      try {
+        await apiCall(`/notifications/read-all?userId=${user.id}`, 'PATCH');
+        loadNotifications();
+        showToast('All notifications cleared.', 'info');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

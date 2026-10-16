@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kitchen Dashboard | Campus Mess Management</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a href="cook.html" class="brand-logo">
+        <div class="brand-icon">🍽️</div>
+        <span>Campus<span style="color: var(--primary);">Mess</span> <span class="badge badge-warning">KITCHEN</span></span>
+      </a>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <span id="cook-name" style="font-weight: 600;"></span>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content" style="max-width: 1440px; margin: 0 auto; width: 100%;">
+    <section class="card" style="background: linear-gradient(135deg, #d97706, #b45309); color: #ffffff; padding: 1.75rem; margin-bottom: 1.75rem; border: none;">
+      <h1 style="color: #ffffff; font-size: 1.7rem; margin-bottom: 0.4rem;">Kitchen Prep Dashboard</h1>
+      <p style="color: #fef3c7;">Today's meal plan, preparation times, and expected servings.</p>
+      <p id="dashboard-date" style="color: #ffffff; margin-top: 0.5rem;"></p>
+    </section>
+
+    <section class="grid grid-cols-4 gap-4" style="margin-bottom: 2rem;" aria-label="Kitchen overview">
+      <article class="stat-card">
+        <div class="stat-icon" style="background: #eff6ff; color: #2563eb;">👥</div>
+        <div><div id="student-count" class="stat-val">—</div><div class="stat-label">Students</div></div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-icon" style="background: #fffbeb; color: #d97706;">🍳</div>
+        <div><div id="breakfast-servings" class="stat-val">—</div><div class="stat-label">Breakfast Servings</div></div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-icon" style="background: #ecfdf5; color: #059669;">🍲</div>
+        <div><div id="lunch-servings" class="stat-val">—</div><div class="stat-label">Lunch Servings</div></div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-icon" style="background: #fdf2f8; color: #db2777;">🍽️</div>
+        <div><div id="dinner-servings" class="stat-val">—</div><div class="stat-label">Dinner Servings</div></div>
+      </article>
+    </section>
+
+    <section class="grid grid-cols-2 gap-6">
+      <article class="card">
+        <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Today's Meal Preparation</h2>
+        <div id="meal-plan" style="display: grid; gap: 0.75rem;">
+          <p>Loading today's meal plan…</p>
+        </div>
+      </article>
+      <article class="card">
+        <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Preparation Schedule</h2>
+        <div id="meal-schedule" style="display: grid; gap: 0.75rem;">
+          <p>Loading preparation schedule…</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="card" style="margin-top: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.2rem;">Low-stock Ingredients</h2>
+        <span id="low-stock-count" class="badge badge-warning">— items</span>
+      </div>
+      <div id="low-stock-items" style="display: grid; gap: 0.5rem;">
+        <p>Loading inventory…</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    const cook = requireAuth(['cook']);
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[character]);
+    }
+
+    async function loadCookDashboard() {
+      document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString(undefined, {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+
+      try {
+        const [stats, lowStock] = await Promise.all([
+          apiCall('/reports/dashboard?role=cook'),
+          apiCall('/inventory/low-stock')
+        ]);
+
+        document.getElementById('student-count').textContent = stats.totalStudents ?? 0;
+        for (const meal of ['breakfast', 'lunch', 'dinner']) {
+          document.getElementById(`${meal}-servings`).textContent = stats.servings?.[meal] ?? 0;
+        }
+
+        const menus = stats.todayMenus ?? [];
+        const meals = ['BREAKFAST', 'LUNCH', 'DINNER'];
+        document.getElementById('meal-plan').innerHTML = meals.map(meal => {
+          const menu = menus.find(item => item.mealType?.toUpperCase() === meal);
+          const servings = stats.servings?.[meal.toLowerCase()] ?? 0;
+          return `
+            <div style="padding: 0.9rem; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                <strong>${meal}</strong>
+                <span class="badge badge-info">${escapeHtml(servings)} servings</span>
+              </div>
+              <p style="margin-top: 0.4rem;">${menu ? escapeHtml(menu.foodItems) : 'Menu not published yet.'}</p>
+              ${menu?.description ? `<p style="font-size: 0.875rem; margin-top: 0.25rem;">${escapeHtml(menu.description)}</p>` : ''}
+            </div>`;
+        }).join('');
+
+        const schedules = stats.schedules ?? [];
+        document.getElementById('meal-schedule').innerHTML = schedules.length
+          ? schedules.map(schedule => `
+            <div style="padding: 0.9rem; border-bottom: 1px solid var(--border-color);">
+              <strong>${escapeHtml(schedule.mealType)}</strong>
+              <p style="margin-top: 0.25rem;">Serving: ${escapeHtml(schedule.mealTime)}</p>
+              <p>Preparation: ${escapeHtml(schedule.preparationTime)}</p>
+              <p>Attendance cutoff: ${escapeHtml(schedule.attendanceDeadline)}</p>
+            </div>`).join('')
+          : '<p>No preparation schedule is available.</p>';
+
+        document.getElementById('low-stock-count').textContent =
+          `${lowStock.length} ${lowStock.length === 1 ? 'item' : 'items'}`;
+        document.getElementById('low-stock-items').innerHTML = lowStock.length
+          ? lowStock.map(item => `
+            <div style="display: flex; justify-content: space-between; gap: 1rem; padding: 0.75rem; border-bottom: 1px solid var(--border-color);">
+              <strong>${escapeHtml(item.itemName)}</strong>
+              <span class="badge badge-warning">${escapeHtml(item.quantity)} ${escapeHtml(item.unit)} left</span>
+            </div>`).join('')
+          : '<p>All ingredients are above their minimum stock levels.</p>';
+      } catch (error) {
+        showToast(error.message || 'Could not load kitchen dashboard data.', 'error');
+        for (const id of ['meal-plan', 'meal-schedule', 'low-stock-items']) {
+          document.getElementById(id).innerHTML = '<p>Could not load this information. Please refresh the page.</p>';
+        }
+      }
+    }
+
+    if (cook) {
+      document.getElementById('cook-name').textContent = cook.name || 'Kitchen Staff';
+      loadCookDashboard();
+    }
+  </script>
+</body>
+</html>
